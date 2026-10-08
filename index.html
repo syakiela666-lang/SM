@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1a1a1a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ShopeeMGR">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>ShopeeMGR</title>
+  <style>
+    :root {
+      /* Dark Theme (Default) */
+      --body-bg: #121212;
+      --app-bg: #000000;
+      --text-color: #e0e0e0;
+      --border-color: #333333;
+      --active-bg: #1a1a1a;
+      
+      --header-bg: #1a1a1a;
+      --btn-bg: #2a2a2a;
+      --btn-border: #444;
+      --btn-active-setting: #444;
+      --btn-active-setting-border: #666;
+      
+      --panel-bg: #1e1e1e;
+      --input-bg: #333;
+      --input-text: #ffffff;
+      --input-border: #555;
+      
+      --success-color: #4caf50;
+      --edit-color: #b28900;
+      --delete-color: #cc0000;
+      --copied-bg: #0d220f;
+      
+      --scrollbar: #555;
+      
+      --item-font-size: 10px; 
+    }
+
+    body.light-mode {
+      /* Light Theme */
+      --body-bg: #f0f2f5;
+      --app-bg: #ffffff;
+      --text-color: #212529;
+      --border-color: #dee2e6;
+      --active-bg: #e9ecef;
+      
+      --header-bg: #f8f9fa;
+      --btn-bg: #ffffff;
+      --btn-border: #ced4da;
+      --btn-active-setting: #e2e6ea;
+      --btn-active-setting-border: #dae0e5;
+      
+      --panel-bg: #f8f9fa;
+      --input-bg: #ffffff;
+      --input-text: #212529;
+      --input-border: #ced4da;
+      
+      --success-color: #28a745;
+      --edit-color: #d39e00;
+      --delete-color: #dc3545;
+      --copied-bg: #d4edda;
+      
+      --scrollbar: #adb5bd;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
+    body {
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--body-bg);
+      display: flex; justify-content: center; align-items: center; 
+      min-height: 100vh; min-height: 100dvh;
+      transition: background-color 0.2s;
+    }
+    
+    .app-container {
+      width: 100%; max-width: 520px; 
+      height: 100vh; height: 100dvh; max-height: 1000px;
+      background: var(--app-bg); color: var(--text-color);
+      display: flex; flex-direction: column; position: relative;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    /* --- HEADER --- */
+    .header {
+      display: flex;
+      gap: 4px; 
+      padding: 6px 8px; 
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
+      transition: background-color 0.2s;
+    }
+    
+    .header button {
+      flex: 1;
+      padding: 6px 0; 
+      background: var(--btn-bg);
+      color: var(--text-color);
+      border: 1px solid var(--btn-border);
+      border-radius: 4px;
+      font-size: 14px; 
+      cursor: pointer;
+      display: flex; justify-content: center; align-items: center;
+      transition: background 0.1s, border-color 0.1s;
+    }
+    
+    .header button:active { transform: scale(0.95); }
+    .header button.active-edit { background: var(--edit-color); border-color: var(--edit-color); color: white;}
+    .header button.active-delete { background: var(--delete-color); border-color: var(--delete-color); color: white;}
+    .header button.active-setting { background: var(--btn-active-setting); border-color: var(--btn-active-setting-border); }
+
+    /* --- SETTINGS PANEL --- */
+
+    /* --- SETTINGS PANEL --- */
+    .settings-panel {
+      display: none; 
+      padding: 12px;
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border-color);
+      font-size: 13px;
+    }
+    .settings-row {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+    }
+    .settings-row select {
+      width: 80px; 
+      background: var(--input-bg); 
+      color: var(--input-text); 
+      border: 1px solid var(--input-border);
+      border-radius: 4px; 
+      padding: 6px; 
+      outline: none;
+      cursor: pointer;
+    }
+    #btnSaveSettings {
+      width: 100%; padding: 8px; background: var(--success-color); color: white;
+      border: none; border-radius: 4px; font-weight: bold; cursor: pointer;
+    }
+    #btnSaveSettings:active { filter: brightness(0.9); }
+
+    /* --- LIST CONTAINER --- */
+    .list-container { flex: 1; overflow-y: auto; padding: 0; }
+    .list-container::-webkit-scrollbar { width: 2px; }
+    .list-container::-webkit-scrollbar-thumb { background: var(--scrollbar); }
+
+    /* --- AKUN: 4 KOLOM DALAM 1 BARIS --- */
+    .key-item {
+      border-bottom: 1px solid var(--border-color);
+      border-left: 3px solid transparent;
+      transition: background-color 0.1s;
+      /* Lewati render baris di luar layar: daftar ratusan akun tetap mulus.
+         Browser lama yang tidak mendukung akan mengabaikan properti ini. */
+      content-visibility: auto;
+      contain-intrinsic-size: auto 38px;
+    }
+    .key-columns { display: flex; align-items: stretch; }
+    .key-col {
+      padding: 10px;
+      font-size: var(--item-font-size); line-height: 1.4;
+      cursor: pointer; user-select: none;
+      min-width: 0;
+      word-break: break-all;
+      transition: background-color 0.1s;
+    }
+    /* Kolom 1: Email */
+    .key-col.key-email {
+      flex: 0 0 30%; max-width: 30%;
+      border-right: 1px solid var(--border-color);
+    }
+    /* Kolom 2: Nama Akun */
+    .key-col.key-name {
+      flex: 0 0 26%; max-width: 26%;
+      border-right: 1px solid var(--border-color);
+      font-weight: bold;
+    }
+    /* Kolom 3: No. HP */
+    .key-col.key-phone {
+      flex: 0 0 20%; max-width: 20%;
+      border-right: 1px solid var(--border-color);
+      font-family: Consolas, 'Courier New', monospace;
+    }
+    /* Kolom 4: Password */
+    .key-col.key-pass {
+      flex: 1;
+      font-family: Consolas, 'Courier New', monospace;
+    }
+    .key-col:hover { background: var(--active-bg); }
+    .key-col:active { filter: brightness(0.9); }
+    .key-col.copied { color: var(--success-color); background: var(--copied-bg); }
+    .key-col.clamped {
+      display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;
+    }
+
+    /* Visual feedback Edit/Delete Mode */
+    .app-container.mode-edit .key-item { border-left-color: var(--edit-color); }
+    .app-container.mode-delete .key-item { border-left-color: #555; }
+    .app-container.mode-delete .key-item.selected-for-delete { border-left-color: var(--delete-color); background: rgba(204, 0, 0, 0.1); }
+
+    /* --- DELETE ACTIONS BAR --- */
+    .delete-actions {
+      display: none;
+      padding: 8px;
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--border-color);
+      gap: 6px;
+    }
+    .app-container.mode-delete .delete-actions {
+      display: flex;
+    }
+    .delete-actions button {
+      flex: 1; padding: 6px 0; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 12px; font-weight: bold;
+    }
+    #btnSelectAllDelete { background: #444; }
+    #btnConfirmDelete { background: var(--delete-color); }
+    #btnCancelDelete { background: #666; }
+    .delete-actions button:active { filter: brightness(0.8); }
+
+    /* --- CUSTOM MODAL --- */
+    .modal-overlay {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(2px);
+      display: none; justify-content: center; align-items: center;
+      z-index: 1000; padding: 16px;
+    }
+    .modal-overlay.show { display: flex; }
+    
+    .modal-content {
+      background: var(--panel-bg); width: 100%; border-radius: 8px; padding: 16px;
+      border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px;
+    }
+    .modal-content h3 { font-size: 14px; margin: 0; }
+    
+    .modal-input {
+      width: 100%; background: var(--input-bg); color: var(--input-text);
+      border: 1px solid var(--input-border); border-radius: 4px;
+      padding: 10px; font-family: inherit; font-size: 13px; outline: none;
+    }
+    .modal-input:focus { border-color: var(--success-color); }
+    
+    #modalPhoneInput, #modalPasswordInput { font-family: Consolas, 'Courier New', monospace; }
+    
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .modal-actions button {
+      padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px;
+    }
+    .btn-cancel { background: #666; color: white; }
+    .btn-save { background: var(--success-color); color: white; }
+    .modal-actions button:active { filter: brightness(0.9); }
+
+    /* --- TOAST --- */
+    .toast {
+      position: absolute; top: 50px; left: 50%; transform: translateX(-50%) translateY(-20px);
+      background: var(--success-color); color: white; padding: 6px 14px;
+      border-radius: 4px; font-weight: bold; font-size: 12px;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s; z-index: 100;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 600px) {
+      body { background-color: var(--app-bg); }
+      .app-container { max-width: 100%; height: 100vh; height: 100dvh; max-height: none; } 
+    }
+
+    /* --- SEARCH FEATURE STYLES --- */
+    mark.search-highlight {
+      background: #FFEA00;
+      color: #000000;
+      padding: 1px 3px;
+      border-radius: 3px;
+      font-weight: bold;
+      box-shadow: 0 0 5px rgba(255, 234, 0, 0.4);
+    }
+    #searchWordInput:focus {
+      border-color: var(--success-color);
+      box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+    }
+
+    /* --- BACKUP MODAL --- */
+    .backup-actions { display: flex; flex-direction: column; gap: 8px; }
+    .backup-actions button {
+      padding: 10px; border: 1px solid var(--btn-border); border-radius: 4px;
+      background: var(--btn-bg); color: var(--text-color);
+      font-size: 13px; font-weight: bold; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .backup-actions button:active { filter: brightness(0.85); }
+    .backup-info { font-size: 11px; color: #888; text-align: center; padding: 4px 0; }
+
+    /* --- SEARCH BAR --- */
+    .search-bar-container {
+      padding: 6px 8px;
+      background: var(--header-bg);
+      border-top: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+    .search-bar-inner { position: relative; display: flex; align-items: center; }
+    .search-icon {
+      position: absolute; left: 10px;
+      color: #888; font-size: 13px; pointer-events: none;
+    }
+    #searchWordInput {
+      width: 100%;
+      background: var(--input-bg); color: var(--input-text);
+      border: 1px solid var(--input-border); border-radius: 16px;
+      padding: 6px 28px 6px 30px; font-size: 12px;
+      outline: none; transition: all 0.2s;
+    }
+    #btnClearSearch {
+      position: absolute; right: 8px;
+      background: transparent; border: none;
+      color: #888; font-size: 14px; cursor: pointer;
+      padding: 2px 6px; display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container" id="app-container">
+    
+    <!-- Tombol Header -->
+    <div class="header">
+      <button id="btnSetting" title="Pengaturan">⚙️</button>
+      <button id="btnDelete" title="Hapus Mode">🗑️</button>
+      <button id="btnEdit" title="Edit Mode">✏️</button>
+      <button id="btnBackup" title="Backup / Restore">💾</button>
+      <button id="btnAdd" title="Tambah Akun">➕</button>
+    </div>
+
+    <!-- Panel Pengaturan dengan Dropdown -->
+    <div class="settings-panel" id="settingsPanel">
+      <div class="settings-row">
+        <label>Tema UI:</label>
+        <select id="inputTheme">
+          <option value="dark" selected>Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </div>
+      <div class="settings-row">
+        <label>Ukuran Font:</label>
+        <select id="inputFontSize">
+          <option value="8">8 px</option>
+          <option value="9">9 px</option>
+          <option value="10" selected>10 px</option>
+          <option value="11">11 px</option>
+          <option value="12">12 px</option>
+          <option value="14">14 px</option>
+        </select>
+      </div>
+      <div class="settings-row">
+        <label>Maks Baris:</label>
+        <select id="inputLineClamp">
+          <option value="0">Semua</option>
+          <option value="1">1 Baris</option>
+          <option value="2">2 Baris</option>
+          <option value="3">3 Baris</option>
+          <option value="4">4 Baris</option>
+          <option value="5">5 Baris</option>
+          <option value="6">6 Baris</option>
+          <option value="7">7 Baris</option>
+        </select>
+      </div>
+      <button id="btnSaveSettings">Tutup & Terapkan</button>
+    </div>
+
+    <div class="delete-actions" id="deleteActions">
+      <button id="btnSelectAllDelete">Select All</button>
+      <button id="btnConfirmDelete">Hapus Terpilih (0)</button>
+      <button id="btnCancelDelete">Batal</button>
+    </div>
+
+    <div class="toast" id="toast">COPIED</div>
+
+    <div class="list-container" id="list">
+      <!-- Isi akan digenerate via JS -->
+    </div>
+
+    <!-- Search Bar (Di bawah list) -->
+    <div class="search-bar-container">
+      <div class="search-bar-inner">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchWordInput" placeholder="Cari email / nama akun / no HP / password..." autocomplete="off" />
+        <button id="btnClearSearch" title="Clear search">✕</button>
+      </div>
+    </div>
+
+    <!-- CUSTOM MODAL: ADD/EDIT AKUN -->
+    <div class="modal-overlay" id="modalOverlay">
+      <div class="modal-content">
+        <h3 id="modalTitle">Judul</h3>
+        <input type="text" id="modalEmailInput" class="modal-input" placeholder="Email..." autocomplete="off" spellcheck="false" />
+        <input type="text" id="modalNameInput" class="modal-input" placeholder="Nama akun..." autocomplete="off" />
+        <input type="text" id="modalPhoneInput" class="modal-input" placeholder="No. HP (boleh kosong)..." autocomplete="off" spellcheck="false" inputmode="tel" />
+        <input type="text" id="modalPasswordInput" class="modal-input" placeholder="Password (boleh kosong)..." autocomplete="off" spellcheck="false" />
+        <div class="modal-actions">
+          <button id="btnModalCancel" class="btn-cancel">Batal</button>
+          <button id="btnModalSave" class="btn-save">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BACKUP / RESTORE MODAL -->
+    <div class="modal-overlay" id="backupModalOverlay">
+      <div class="modal-content">
+        <h3>Backup &amp; Restore</h3>
+        <div class="backup-info">Export Excel (.xlsx) berisi semua akun (No, Email, Nama Akun, No. HP, Password). Export JSON = backup lengkap + settings, bisa di-import balik.</div>
+        <div class="backup-actions">
+          <button id="btnExportExcel">📊 Export Excel (Download .xlsx)</button>
+          <button id="btnExportData">📤 Export Data (Download .json)</button>
+          <button id="btnImportData">📥 Import Data (Upload .json)</button>
+          <input type="file" id="fileImportInput" accept="application/json,.json" style="display: none;" />
+        </div>
+        <div class="modal-actions">
+          <button id="btnBackupClose" class="btn-cancel">Tutup</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // =======================================================
+    // PENGATURAN MEMORI (localStorage)
+    // Tool: SHOPEE MGR
+    // Ganti nilai STORAGE_KEY di bawah ini pada setiap COPY tool
+    // (lihat PANDUAN EDIT MEMORI.txt) supaya datanya terpisah
+    // dan tidak saling bentrok.
+    // =======================================================
+    const STORAGE_KEY = 'ShopeeMGR';
+
+    // --- DOM ELEMENTS ---
+    const listContainer = document.getElementById('list');
+    const toast = document.getElementById('toast');
+    const appContainer = document.getElementById('app-container');
+    
+    const btnAdd = document.getElementById('btnAdd');
+    const btnEdit = document.getElementById('btnEdit');
+    const btnDelete = document.getElementById('btnDelete');
+    const btnSetting = document.getElementById('btnSetting');
+    
+    const settingsPanel = document.getElementById('settingsPanel');
+    const inputTheme = document.getElementById('inputTheme');
+    const inputFontSize = document.getElementById('inputFontSize');
+    const inputLineClamp = document.getElementById('inputLineClamp');
+    const btnSaveSettings = document.getElementById('btnSaveSettings');
+    
+    const btnSelectAllDelete = document.getElementById('btnSelectAllDelete');
+    const btnConfirmDelete = document.getElementById('btnConfirmDelete');
+    const btnCancelDelete = document.getElementById('btnCancelDelete');
+    
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalEmailInput = document.getElementById('modalEmailInput');
+    const modalNameInput = document.getElementById('modalNameInput');
+    const modalPhoneInput = document.getElementById('modalPhoneInput');
+    const modalPasswordInput = document.getElementById('modalPasswordInput');
+    const btnModalCancel = document.getElementById('btnModalCancel');
+    const btnModalSave = document.getElementById('btnModalSave');
+
+    const searchWordInput = document.getElementById('searchWordInput');
+    const btnClearSearch = document.getElementById('btnClearSearch');
+
+    const btnBackup = document.getElementById('btnBackup');
+    const backupModalOverlay = document.getElementById('backupModalOverlay');
+    const btnExportExcel = document.getElementById('btnExportExcel');
+    const btnExportData = document.getElementById('btnExportData');
+    const btnImportData = document.getElementById('btnImportData');
+    const fileImportInput = document.getElementById('fileImportInput');
+    const btnBackupClose = document.getElementById('btnBackupClose');
+
+    // --- STATE & DATA ---
+    let mode = 'copy'; 
+    let appSettings = { fontSize: 10, lineClamp: 0, theme: 'dark' };
+    let toastTimeout;
+    let selectedForDelete = new Set(); // berisi ID akun (bukan indeks array)
+    let modalTargetId = null; // ID akun yang diedit; null = mode tambah
+    let searchQuery = "";
+
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function highlightText(text, query) {
+      if (!query) {
+        const span = document.createElement('span');
+        span.textContent = text;
+        return span;
+      }
+      const fragment = document.createDocumentFragment();
+      const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+      let lastIndex = 0;
+      let match;
+      while ((match = regex.exec(text)) !== null) {
+        const matchText = match[0];
+        const offset = match.index;
+        if (offset > lastIndex) {
+          fragment.appendChild(document.createTextNode(text.slice(lastIndex, offset)));
+        }
+        const mark = document.createElement('mark');
+        mark.className = 'search-highlight';
+        mark.textContent = matchText;
+        fragment.appendChild(mark);
+        lastIndex = offset + matchText.length;
+      }
+      if (lastIndex < text.length) {
+        fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+      }
+      return fragment;
+    }
+
+    const defaultKeys = [
+      { email: "contoh@email.com", name: "Contoh Akun", phone: "081234567890", password: "contoh123" }
+    ];
+
+    function sortData() {
+      apiKeys.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+    }
+
+    // Generator ID unik untuk tiap akun (dipakai untuk seleksi hapus & target edit,
+    // supaya tidak bergantung pada indeks array yang bisa bergeser saat sort/import)
+    function genId() {
+      if (window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+      return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+    }
+
+    // 1. Load Data
+    // Mengembalikan: keys (sudah dijamin punya ID), hadStoredData (memori pernah
+    // terisi / tidak - akun contoh hanya muncul kalau memori benar-benar kosong),
+    // dan migrated (data lama tanpa ID yang perlu disimpan ulang).
+    function loadDataFromStorage() {
+      let keys = [];
+      let hadStoredData = false;
+      let migrated = false;
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY + '_data');
+        if (raw !== null) hadStoredData = true;
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          const seenIds = new Set();
+          keys = parsed
+            .filter(k => k && typeof k.email === 'string' && typeof k.name === 'string')
+            .map(k => {
+              if (typeof k.id !== 'string' || !k.id) migrated = true;
+              const id = (typeof k.id === 'string' && k.id && !seenIds.has(k.id)) ? k.id : genId();
+              seenIds.add(id);
+              return {
+                id: id,
+                email: k.email,
+                name: k.name,
+                phone: (typeof k.phone === 'string' ? k.phone : (typeof k.phone === 'number' ? String(k.phone) : '')),
+                password: (typeof k.password === 'string' ? k.password : (typeof k.password === 'number' ? String(k.password) : ''))
+              };
+            });
+        }
+      } catch (e) {}
+      return { keys: keys, hadStoredData: hadStoredData, migrated: migrated };
+    }
+
+    const loadedData = loadDataFromStorage();
+    let apiKeys = loadedData.keys;
+    if (!loadedData.hadStoredData) {
+      // Memori benar-benar kosong (belum pernah ada data) -> tampilkan akun contoh.
+      // Kalau user sengaja menghapus semua akun, daftar tetap kosong setelah reload.
+      apiKeys = defaultKeys.map(k => ({ id: genId(), email: k.email, name: k.name, phone: k.phone, password: k.password }));
+    } else if (loadedData.migrated) {
+      // Data lama belum punya ID unik -> simpan sekali supaya ID jadi permanen
+      saveData();
+    }
+
+    // =======================================================
+    // 3. EXPORT / IMPORT BACKUP
+    // =======================================================
+    function exportData() {
+      const payload = {
+        app: "ShopeeMGR",
+        version: 3,
+        exportedAt: new Date().toISOString(),
+        keys: apiKeys,
+        settings: appSettings
+      };
+      const json = JSON.stringify(payload, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      a.href = url;
+      a.download = `shopeemgr-backup-${ts}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('EXPORTED', 'var(--success-color)');
+    }
+
+    // =======================================================
+    // 3a. EXPORT EXCEL (.xlsx)
+    // Generator murni tanpa library supaya tetap jalan offline (PWA):
+    // file .xlsx sebenarnya adalah ZIP berisi XML (format OOXML),
+    // jadi cukup dirakit manual di bawah.
+    // =======================================================
+    function xmlEscape(s) {
+      return String(s)
+        // Buang karakter kontrol yang ilegal di XML (kecuali tab, LF, CR)
+        .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+    }
+
+    function zipConcat(parts) {
+      let len = 0;
+      for (const p of parts) len += p.length;
+      const out = new Uint8Array(len);
+      let pos = 0;
+      for (const p of parts) { out.set(p, pos); pos += p.length; }
+      return out;
+    }
+
+    function crc32(bytes) {
+      if (!crc32.table) {
+        const t = new Uint32Array(256);
+        for (let n = 0; n < 256; n++) {
+          let c = n;
+          for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+          t[n] = c >>> 0;
+        }
+        crc32.table = t;
+      }
+      let crc = 0xFFFFFFFF;
+      for (let i = 0; i < bytes.length; i++) crc = crc32.table[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+      return (crc ^ 0xFFFFFFFF) >>> 0;
+    }
+
+    // Rakit file ZIP tanpa kompresi (metode stored): file hasilnya kecil dan
+    // cara ini berjalan di semua browser tanpa library tambahan.
+    function buildZip(files) {
+      const u16 = v => new Uint8Array([v & 0xFF, (v >>> 8) & 0xFF]);
+      const u32 = v => new Uint8Array([v & 0xFF, (v >>> 8) & 0xFF, (v >>> 16) & 0xFF, (v >>> 24) & 0xFF]);
+      const enc = new TextEncoder();
+      const parts = [];
+      const central = [];
+      let offset = 0;
+
+      files.forEach(f => {
+        const nameBytes = enc.encode(f.name);
+        const crc = crc32(f.data);
+        const local = zipConcat([
+          u32(0x04034b50), u16(20), u16(0), u16(0), u16(0), u16(0x0021),
+          u32(crc), u32(f.data.length), u32(f.data.length),
+          u16(nameBytes.length), u16(0)
+        ]);
+        parts.push(local, nameBytes, f.data);
+        central.push({ name: nameBytes, crc: crc, size: f.data.length, offset: offset });
+        offset += local.length + nameBytes.length + f.data.length;
+      });
+
+      const cdStart = offset;
+      let cdSize = 0;
+      central.forEach(c => {
+        const hdr = zipConcat([
+          u32(0x02014b50), u16(20), u16(20), u16(0), u16(0), u16(0), u16(0x0021),
+          u32(c.crc), u32(c.size), u32(c.size),
+          u16(c.name.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(c.offset)
+        ]);
+        parts.push(hdr, c.name);
+        cdSize += hdr.length + c.name.length;
+      });
+
+      parts.push(zipConcat([
+        u32(0x06054b50), u16(0), u16(0), u16(central.length), u16(central.length),
+        u32(cdSize), u32(cdStart), u16(0)
+      ]));
+
+      return new Blob(parts, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    }
+
+    function buildXlsx(keys) {
+      const enc = new TextEncoder();
+      const xmlDecl = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+
+      // Semua sel ditulis sebagai teks (inlineStr) supaya no. HP tidak berubah
+      // jadi angka / notasi ilmiah dan angka 0 di depan tidak hilang di Excel.
+      let rowsXml = '<row r="1">' + ['No', 'Email', 'Nama Akun', 'No. HP', 'Password'].map((h, i) =>
+        `<c r="${String.fromCharCode(65 + i)}1" t="inlineStr" s="1"><is><t xml:space="preserve">${xmlEscape(h)}</t></is></c>`
+      ).join('') + '</row>';
+
+      keys.forEach((k, idx) => {
+        const r = idx + 2;
+        rowsXml += `<row r="${r}">`
+          + `<c r="A${r}" t="n"><v>${idx + 1}</v></c>`
+          + `<c r="B${r}" t="inlineStr"><is><t xml:space="preserve">${xmlEscape(k.email)}</t></is></c>`
+          + `<c r="C${r}" t="inlineStr"><is><t xml:space="preserve">${xmlEscape(k.name)}</t></is></c>`
+          + `<c r="D${r}" t="inlineStr"><is><t xml:space="preserve">${xmlEscape(k.phone)}</t></is></c>`
+          + `<c r="E${r}" t="inlineStr"><is><t xml:space="preserve">${xmlEscape(k.password)}</t></is></c>`
+          + '</row>';
+      });
+
+      const contentTypes = xmlDecl
+        + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        + '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        + '<Default Extension="xml" ContentType="application/xml"/>'
+        + '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+        + '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+        + '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
+        + '</Types>';
+
+      const rootRels = xmlDecl
+        + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        + '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
+        + '</Relationships>';
+
+      const workbook = xmlDecl
+        + '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
+        + ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        + '<sheets><sheet name="Akun" sheetId="1" r:id="rId1"/></sheets></workbook>';
+
+      const workbookRels = xmlDecl
+        + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        + '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
+        + '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
+        + '</Relationships>';
+
+      const styles = xmlDecl
+        + '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        + '<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>'
+        + '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>'
+        + '<fill><patternFill patternType="solid"><fgColor rgb="FFD9E1F2"/><bgColor indexed="64"/></patternFill></fill></fills>'
+        + '<borders count="1"><border/></borders>'
+        + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+        + '<cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+        + '<xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/></cellXfs>'
+        + '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'
+        + '</styleSheet>';
+
+      const sheet = xmlDecl
+        + '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        + '<cols><col min="1" max="1" width="6" customWidth="1"/><col min="2" max="2" width="30" customWidth="1"/>'
+        + '<col min="3" max="3" width="24" customWidth="1"/><col min="4" max="4" width="16" customWidth="1"/>'
+        + '<col min="5" max="5" width="16" customWidth="1"/></cols>'
+        + `<sheetData>${rowsXml}</sheetData></worksheet>`;
+
+      return buildZip([
+        { name: '[Content_Types].xml', data: enc.encode(contentTypes) },
+        { name: '_rels/.rels', data: enc.encode(rootRels) },
+        { name: 'xl/workbook.xml', data: enc.encode(workbook) },
+        { name: 'xl/_rels/workbook.xml.rels', data: enc.encode(workbookRels) },
+        { name: 'xl/styles.xml', data: enc.encode(styles) },
+        { name: 'xl/worksheets/sheet1.xml', data: enc.encode(sheet) }
+      ]);
+    }
+
+    function exportExcel() {
+      if (apiKeys.length === 0) {
+        showToast('TIDAK ADA DATA', 'var(--edit-color)');
+        return;
+      }
+      try {
+        const blob = buildXlsx(apiKeys);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        a.href = url;
+        a.download = `shopeemgr-akun-${ts}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast(`EXPORT EXCEL (${apiKeys.length} AKUN)`, 'var(--success-color)');
+      } catch (err) {
+        alert('Gagal membuat file Excel: ' + err.message);
+      }
+    }
+
+    function importData(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.app !== "ShopeeMGR" || typeof data.version !== "number") {
+            alert("File ini bukan backup ShopeeMGR yang valid.");
+            return;
+          }
+          if (!Array.isArray(data.keys)) {
+            alert("Format file rusak / tidak lengkap.");
+            return;
+          }
+          const existingCombo = new Set(apiKeys.map(k => `${k.email}|||${k.name}|||${k.phone}|||${k.password}`));
+          const existingIds = new Set(apiKeys.map(k => k.id));
+          const newKeys = [];
+          let skippedCount = 0;
+          data.keys.forEach(k => {
+            const valid = k && typeof k.email === 'string' && typeof k.name === 'string' &&
+              (typeof k.phone === 'string' || typeof k.phone === 'number' || k.phone == null);
+            if (!valid) { skippedCount++; return; }
+            // No. HP boleh kosong; angka dikonversi ke teks, bukan dibuang
+            const phone = (typeof k.phone === 'string') ? k.phone : (typeof k.phone === 'number' ? String(k.phone) : '');
+            // Password juga boleh kosong; backup lama (sebelum ada kolom password) dianggap kosong
+            const password = (typeof k.password === 'string') ? k.password : (typeof k.password === 'number' ? String(k.password) : '');
+            const combo = `${k.email}|||${k.name}|||${phone}|||${password}`;
+            if (existingCombo.has(combo)) { skippedCount++; return; }
+            // Pertahankan ID dari backup selama belum terpakai, agar seleksi/edit tetap konsisten
+            const id = (typeof k.id === 'string' && k.id && !existingIds.has(k.id)) ? k.id : genId();
+            existingIds.add(id);
+            existingCombo.add(combo);
+            newKeys.push({ id: id, email: k.email, name: k.name, phone: phone, password: password });
+          });
+          const addedCount = newKeys.length;
+          apiKeys = apiKeys.concat(newKeys);
+          if (data.settings && typeof data.settings === 'object') {
+            appSettings = { ...appSettings, ...data.settings };
+          }
+          sortData();
+          saveData();
+          safeSetItem(STORAGE_KEY + '_settings', JSON.stringify(appSettings));
+          applySettings(); // sudah merender ulang daftar dengan settings terbaru
+          let msg = `IMPORTED +${addedCount}`;
+          if (skippedCount > 0) msg += ` (skip ${skippedCount})`;
+          showToast(msg, addedCount > 0 ? 'var(--success-color)' : 'var(--edit-color)', 2000);
+          backupModalOverlay.classList.remove('show');
+        } catch (err) {
+          alert("Gagal membaca file: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Bersihkan sisa kunci kategori dari versi lama (sistem kategori sudah dihapus).
+    // try/catch: di browser dengan storage diblokir, akses localStorage apa pun
+    // melempar error - kalau tidak ditangkap, seluruh script mati dan layar blank.
+    try {
+      localStorage.removeItem(STORAGE_KEY + '_categories');
+    } catch (e) {}
+
+    sortData();
+
+    // 2. Load Settings
+    try {
+      const storedSettings = localStorage.getItem(STORAGE_KEY + '_settings');
+      if (storedSettings) appSettings = { ...appSettings, ...JSON.parse(storedSettings) };
+    } catch (e) {}
+
+
+    // =======================================================
+    // 2. LOGIKA PENYIMPANAN LOKAL (localStorage)
+    // =======================================================
+    // Tulis ke localStorage dengan penanganan error (kuota penuh / private mode)
+    function safeSetItem(key, value) {
+      try {
+        localStorage.setItem(key, value);
+        return true;
+      } catch (e) {
+        showToast('GAGAL SIMPAN (PENYIMPANAN PENUH?)', 'var(--delete-color)', 2500);
+        return false;
+      }
+    }
+
+    function saveData() {
+      safeSetItem(STORAGE_KEY + '_data', JSON.stringify(apiKeys));
+    }
+
+    // --- LOGIC FUNCTIONS ---
+    function applySettings() {
+      // Terapkan Tema
+      if (appSettings.theme === 'light') {
+        document.body.classList.add('light-mode');
+        inputTheme.value = 'light';
+      } else {
+        document.body.classList.remove('light-mode');
+        inputTheme.value = 'dark';
+      }
+
+      // Terapkan Font
+      const optionExistsFont = Array.from(inputFontSize.options).some(opt => opt.value == appSettings.fontSize);
+      if (optionExistsFont) {
+        inputFontSize.value = appSettings.fontSize;
+      } else {
+        inputFontSize.value = "10"; 
+        appSettings.fontSize = 10;
+      }
+
+      // Terapkan Clamp
+      const optionExistsClamp = Array.from(inputLineClamp.options).some(opt => opt.value == appSettings.lineClamp);
+      if (optionExistsClamp) {
+        inputLineClamp.value = appSettings.lineClamp;
+      } else {
+        inputLineClamp.value = "0";
+        appSettings.lineClamp = 0;
+      }
+
+      document.documentElement.style.setProperty('--item-font-size', appSettings.fontSize + 'px');
+
+      // Sinkronkan warna status bar (meta theme-color) dengan tema aktif
+      const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+      if (themeColorMeta) {
+        themeColorMeta.setAttribute('content', appSettings.theme === 'light' ? '#f8f9fa' : '#1a1a1a');
+      }
+
+      renderList();
+    }
+
+    function saveSettings() {
+      appSettings = {
+        theme: inputTheme.value,
+        fontSize: parseFloat(inputFontSize.value) || 10,
+        lineClamp: parseInt(inputLineClamp.value) || 0
+      };
+      safeSetItem(STORAGE_KEY + '_settings', JSON.stringify(appSettings));
+      applySettings();
+    }
+
+    function showToast(message = "COPIED", bgColor = "var(--success-color)", duration = 1000) {
+      toast.textContent = message;
+      toast.style.background = bgColor;
+      toast.classList.add('show');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => { toast.classList.remove('show'); }, duration);
+    }
+
+    function copyToClipboard(text, element) {
+      const onSuccess = () => {
+        showToast("COPIED", "var(--success-color)");
+        element.classList.add('copied');
+        setTimeout(() => { element.classList.remove('copied'); }, 400);
+      };
+      // Fallback untuk konteks non-secure / izin clipboard ditolak
+      const fallbackCopy = () => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try { ok = document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+        if (ok) {
+          onSuccess();
+        } else {
+          showToast('GAGAL COPY', 'var(--delete-color)');
+        }
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(onSuccess).catch(fallbackCopy);
+      } else {
+        fallbackCopy();
+      }
+    }
+
+    function updateDeleteActionsUI() {
+      btnConfirmDelete.textContent = `Hapus Terpilih (${selectedForDelete.size})`;
+      const visibleItems = getFilteredKeys();
+      const selectedVisible = visibleItems.filter(k => selectedForDelete.has(k.id)).length;
+      if (visibleItems.length > 0 && selectedVisible === visibleItems.length) {
+        btnSelectAllDelete.textContent = "Deselect All";
+      } else {
+        btnSelectAllDelete.textContent = "Select All";
+      }
+    }
+    
+    function matchesSearch(item) {
+      if (searchQuery === '') return true;
+      const q = searchQuery.toLowerCase();
+      return item.email.toLowerCase().includes(q) || item.name.toLowerCase().includes(q) || item.phone.toLowerCase().includes(q) || item.password.toLowerCase().includes(q);
+    }
+
+    function handleItemClick(item) {
+      if (mode === 'edit') {
+        openModal("Edit Akun", item, item.id);
+      } else if (mode === 'delete') {
+        if (selectedForDelete.has(item.id)) {
+          selectedForDelete.delete(item.id);
+        } else {
+          selectedForDelete.add(item.id);
+        }
+        updateDeleteActionsUI();
+        renderList();
+      }
+    }
+
+    function getFilteredKeys() {
+      if (searchQuery !== '') {
+        return apiKeys.filter(k => matchesSearch(k));
+      }
+      // Hasil tidak pernah dimutasi pemanggil, jadi cukup kembalikan referensinya
+      return apiKeys;
+    }
+
+    function renderList() {
+      listContainer.innerHTML = '';
+
+      const filteredKeys = getFilteredKeys();
+
+      if (filteredKeys.length === 0) {
+        // Dibangun via DOM (bukan innerHTML) supaya teks pencarian tidak pernah
+        // dieksekusi sebagai HTML
+        const msg = document.createElement('div');
+        msg.style.cssText = 'text-align: center; color: #888; font-size: 12px;';
+        if (searchQuery !== '') {
+          msg.style.padding = '24px 16px';
+          msg.appendChild(document.createTextNode('Tidak ditemukan "'));
+          const strong = document.createElement('strong');
+          strong.textContent = searchQuery;
+          msg.appendChild(strong);
+          msg.appendChild(document.createTextNode('".'));
+        } else {
+          msg.style.padding = '20px';
+          msg.textContent = 'Belum ada akun. Tekan ➕ untuk menambah.';
+        }
+        listContainer.appendChild(msg);
+        return;
+      }
+
+      // Bangun semua baris di fragment dulu, lalu tempel sekali:
+      // 1 reflow untuk seluruh daftar, bukan 1 reflow per baris.
+      const fragment = document.createDocumentFragment();
+      filteredKeys.forEach((item) => {
+        const row = document.createElement('div');
+        row.className = 'key-item';
+        row.dataset.id = item.id;
+
+        if (mode === 'delete' && selectedForDelete.has(item.id)) {
+          row.classList.add('selected-for-delete');
+        }
+
+        const columns = document.createElement('div');
+        columns.className = 'key-columns';
+
+        // Kolom 1: Email (klik = copy email)
+        const emailCol = document.createElement('div');
+        emailCol.className = 'key-col key-email';
+        // Kolom 2: Nama Akun (klik = copy nama)
+        const nameCol = document.createElement('div');
+        nameCol.className = 'key-col key-name';
+        // Kolom 3: No. HP (klik = copy no. HP)
+        const phoneCol = document.createElement('div');
+        phoneCol.className = 'key-col key-phone';
+        // Kolom 4: Password (klik = copy password)
+        const passCol = document.createElement('div');
+        passCol.className = 'key-col key-pass';
+
+        if (appSettings.lineClamp > 0) {
+          emailCol.classList.add('clamped');
+          emailCol.style.webkitLineClamp = appSettings.lineClamp;
+          nameCol.classList.add('clamped');
+          nameCol.style.webkitLineClamp = appSettings.lineClamp;
+          phoneCol.classList.add('clamped');
+          phoneCol.style.webkitLineClamp = appSettings.lineClamp;
+          passCol.classList.add('clamped');
+          passCol.style.webkitLineClamp = appSettings.lineClamp;
+        }
+
+        if (searchQuery !== '') {
+          emailCol.appendChild(highlightText(item.email, searchQuery));
+          nameCol.appendChild(highlightText(item.name, searchQuery));
+          phoneCol.appendChild(highlightText(item.phone, searchQuery));
+          passCol.appendChild(highlightText(item.password, searchQuery));
+        } else {
+          emailCol.textContent = item.email;
+          nameCol.textContent = item.name;
+          phoneCol.textContent = item.phone;
+          passCol.textContent = item.password;
+        }
+
+        columns.appendChild(emailCol);
+        columns.appendChild(nameCol);
+        columns.appendChild(phoneCol);
+        columns.appendChild(passCol);
+        row.appendChild(columns);
+        fragment.appendChild(row);
+      });
+
+      listContainer.appendChild(fragment);
+    }
+
+    // Delegasi klik: SATU listener untuk seluruh daftar (dipasang sekali seumur
+    // halaman), menggantikan 3 listener per baris yang dibuat-ulang tiap render.
+    listContainer.addEventListener('click', (e) => {
+      const colEl = e.target.closest('.key-col');
+      if (!colEl) return;
+      const rowEl = colEl.closest('.key-item');
+      if (!rowEl || !rowEl.dataset.id) return;
+      const item = apiKeys.find(k => k.id === rowEl.dataset.id);
+      if (!item) return;
+
+      if (mode === 'copy') {
+        let text = item.phone;
+        if (colEl.classList.contains('key-email')) text = item.email;
+        else if (colEl.classList.contains('key-name')) text = item.name;
+        else if (colEl.classList.contains('key-pass')) text = item.password;
+        if (text) {
+          copyToClipboard(text, colEl);
+        } else {
+          showToast('KOSONG', 'var(--edit-color)');
+        }
+      } else {
+        handleItemClick(item);
+      }
+    });
+
+    let searchRenderTimeout;
+    // Daftar pendek dirender langsung (tanpa jeda terasa); daftar panjang
+    // di-debounce supaya mengetik di kolom pencarian tetap mulus.
+    function scheduleListRender() {
+      if (apiKeys.length <= 50) {
+        renderList();
+        return;
+      }
+      clearTimeout(searchRenderTimeout);
+      searchRenderTimeout = setTimeout(renderList, 120);
+    }
+
+    // Kosongkan filter pencarian; render=false dipakai saat pemanggil akan
+    // merender sendiri (menghindari render ganda)
+    function clearSearchInput(render = true) {
+      clearTimeout(searchRenderTimeout);
+      searchQuery = '';
+      searchWordInput.value = '';
+      if (btnClearSearch) btnClearSearch.style.display = 'none';
+      if (render) renderList();
+    }
+
+    if (searchWordInput) {
+      searchWordInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value.trim();
+        if (btnClearSearch) btnClearSearch.style.display = searchQuery ? 'block' : 'none';
+        scheduleListRender();
+      });
+    }
+
+    if (btnClearSearch) {
+      btnClearSearch.addEventListener('click', () => {
+        clearSearchInput();
+      });
+    }
+
+    if (btnBackup) {
+      btnBackup.addEventListener('click', () => {
+        backupModalOverlay.classList.add('show');
+      });
+    }
+    if (btnBackupClose) {
+      btnBackupClose.addEventListener('click', () => {
+        backupModalOverlay.classList.remove('show');
+      });
+    }
+    if (btnExportExcel) {
+      btnExportExcel.addEventListener('click', exportExcel);
+    }
+    if (btnExportData) {
+      btnExportData.addEventListener('click', exportData);
+    }
+    if (btnImportData) {
+      btnImportData.addEventListener('click', () => {
+        fileImportInput.value = '';
+        fileImportInput.click();
+      });
+    }
+    if (fileImportInput) {
+      fileImportInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (confirm(`Import dari "${file.name}"?\nData dengan email + nama akun + no. HP + password sama akan di-skip (merge).`)) {
+            importData(file);
+          }
+        }
+      });
+    }
+
+    function setMode(newMode, hideSettings = true) {
+      mode = (mode === newMode) ? 'copy' : newMode;
+      
+      btnEdit.classList.toggle('active-edit', mode === 'edit');
+      btnDelete.classList.toggle('active-delete', mode === 'delete');
+      
+      appContainer.className = 'app-container';
+      if (mode !== 'copy') appContainer.classList.add(`mode-${mode}`);
+      
+      if (mode === 'delete') {
+        selectedForDelete.clear();
+        updateDeleteActionsUI();
+      }
+      renderList(); 
+      
+      if (hideSettings) {
+        settingsPanel.style.display = 'none';
+        btnSetting.classList.remove('active-setting');
+      }
+    }
+
+    // --- EVENT LISTENERS ---
+    btnSelectAllDelete.addEventListener('click', () => {
+      const visibleItems = getFilteredKeys();
+      const selectedVisible = visibleItems.filter(k => selectedForDelete.has(k.id)).length;
+
+      if (visibleItems.length > 0 && selectedVisible === visibleItems.length) {
+        // "Deselect All": kosongkan SELURUH pilihan, termasuk akun yang
+        // tersembunyi di balik filter pencarian, supaya tidak ada akun
+        // tersembunyi yang ikut terhapus tanpa disadari.
+        selectedForDelete.clear();
+      } else {
+        // "Select All": pilih semua akun yang sedang tampil
+        visibleItems.forEach(k => selectedForDelete.add(k.id));
+      }
+      updateDeleteActionsUI();
+      renderList();
+    });
+
+    btnConfirmDelete.addEventListener('click', () => {
+      if (selectedForDelete.size === 0) return;
+      if (confirm(`Yakin ingin menghapus ${selectedForDelete.size} akun?`)) {
+        apiKeys = apiKeys.filter(k => !selectedForDelete.has(k.id));
+        selectedForDelete.clear();
+        saveData();
+        showToast(`DELETED`, "var(--delete-color)");
+        setMode('copy', false);
+      }
+    });
+    
+    btnCancelDelete.addEventListener('click', () => {
+      setMode('copy', false);
+    });
+
+    // --- MODAL LOGIC (ADD/EDIT AKUN) ---
+    function openModal(title, item, targetId) {
+      modalTitle.textContent = title;
+      modalEmailInput.value = item ? item.email : '';
+      modalNameInput.value = item ? item.name : '';
+      modalPhoneInput.value = item ? item.phone : '';
+      modalPasswordInput.value = item ? item.password : '';
+      modalTargetId = targetId;
+
+      modalOverlay.classList.add('show');
+      modalEmailInput.focus();
+    }
+
+    function closeModal() {
+      modalOverlay.classList.remove('show');
+      modalEmailInput.value = '';
+      modalNameInput.value = '';
+      modalPhoneInput.value = '';
+      modalPasswordInput.value = '';
+      modalTargetId = null;
+    }
+
+    btnModalCancel.addEventListener('click', closeModal);
+
+    btnModalSave.addEventListener('click', () => {
+      const newEmail = modalEmailInput.value.trim();
+      const newName = modalNameInput.value.trim();
+      const newPhone = modalPhoneInput.value.trim();
+      const newPassword = modalPasswordInput.value.trim();
+
+      if (newEmail === '' || newName === '') {
+        alert("Email dan Nama Akun harus diisi.");
+        return;
+      }
+
+      // Peringatkan kalau ada akun lain dengan data persis sama
+      const combo = `${newEmail}|||${newName}|||${newPhone}|||${newPassword}`;
+      const isDuplicate = apiKeys.some(k => `${k.email}|||${k.name}|||${k.phone}|||${k.password}` === combo && k.id !== modalTargetId);
+      if (isDuplicate && !confirm("Akun dengan data yang sama sudah ada di daftar. Tetap simpan?")) {
+        return;
+      }
+
+      if (modalTargetId !== null) {
+        const idx = apiKeys.findIndex(k => k.id === modalTargetId);
+        if (idx === -1) {
+          alert("Akun tidak ditemukan. Data mungkin sudah berubah di tab/jendela lain.");
+          closeModal();
+          return;
+        }
+        apiKeys[idx] = { id: modalTargetId, email: newEmail, name: newName, phone: newPhone, password: newPassword };
+        showToast("EDITED", "var(--edit-color)");
+        // Mode edit tetap aktif supaya bisa mengedit beberapa akun berurutan
+        sortData();
+        saveData();
+        // Kalau hasil edit tidak lagi lolos filter pencarian, barisnya akan
+        // tampak "hilang"; filter hanya dikosongkan dalam kasus itu supaya
+        // akun yang barusan diedit tetap terlihat.
+        if (searchQuery !== '' && !matchesSearch(apiKeys[idx])) clearSearchInput(false);
+        renderList();
+      } else {
+        apiKeys.push({ id: genId(), email: newEmail, name: newName, phone: newPhone, password: newPassword });
+        showToast("ADDED", "var(--success-color)");
+        // Kosongkan filter supaya akun baru langsung terlihat (kalau tidak lolos
+        // filter, akun baru akan tampak "hilang"); render dilakukan di bawah
+        if (searchQuery !== '') clearSearchInput(false);
+        sortData();
+        saveData();
+        if (mode === 'delete') {
+          setMode('copy'); // keluar dari mode hapus + render
+        } else {
+          // Mode edit tetap aktif supaya bisa lanjut menambah/mengedit berurutan
+          renderList();
+        }
+      }
+      closeModal();
+    });
+
+    // Tekan Enter di input = simpan
+    [modalEmailInput, modalNameInput, modalPhoneInput, modalPasswordInput].forEach(el => {
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          btnModalSave.click();
+        }
+      });
+    });
+
+    btnAdd.addEventListener('click', () => {
+      openModal("Tambah Akun", null, null);
+    });
+
+    btnEdit.addEventListener('click', () => setMode('edit'));
+    btnDelete.addEventListener('click', () => setMode('delete'));
+    
+    btnSetting.addEventListener('click', () => {
+      const isHidden = (settingsPanel.style.display === 'none' || settingsPanel.style.display === '');
+      if (isHidden) { setMode('copy', false); }
+      settingsPanel.style.display = isHidden ? 'block' : 'none';
+      btnSetting.classList.toggle('active-setting', isHidden);
+    });
+
+    btnSaveSettings.addEventListener('click', () => {
+      saveSettings();
+      settingsPanel.style.display = 'none';
+      btnSetting.classList.remove('active-setting');
+    });
+
+    // Tutup modal dengan tombol ESC
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (modalOverlay.classList.contains('show')) {
+          closeModal();
+        } else if (backupModalOverlay.classList.contains('show')) {
+          backupModalOverlay.classList.remove('show');
+        }
+      }
+    });
+
+    // Tutup modal dengan klik pada area gelap di luar kotak
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) closeModal();
+    });
+    backupModalOverlay.addEventListener('click', (e) => {
+      if (e.target === backupModalOverlay) backupModalOverlay.classList.remove('show');
+    });
+
+    // Sinkronisasi antar tab: kalau data diubah di tab/jendela lain, muat ulang
+    // otomatis supaya tidak saling menimpa. Tidak ada penulisan di sini agar
+    // tidak memicu event berantai antar tab.
+    window.addEventListener('storage', (e) => {
+      if (e.key === STORAGE_KEY + '_data') {
+        apiKeys = loadDataFromStorage().keys;
+        if (mode === 'delete') {
+          selectedForDelete.clear();
+          updateDeleteActionsUI();
+        }
+        renderList();
+      } else if (e.key === STORAGE_KEY + '_settings') {
+        try {
+          const s = JSON.parse(e.newValue);
+          if (s && typeof s === 'object') appSettings = { ...appSettings, ...s };
+        } catch (err) {}
+        applySettings();
+      }
+    });
+
+    // Inisialisasi awal
+    applySettings();
+
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').then(registration => {
+          console.log('SW registered:', registration);
+          // Beri tahu user kalau ada versi baru yang sudah ter-install di background
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (!newWorker) return;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                showToast('VERSI BARU TERSEDIA - REFRESH HALAMAN', 'var(--edit-color)', 4000);
+              }
+            });
+          });
+        }).catch(error => {
+          console.log('SW registration failed:', error);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
